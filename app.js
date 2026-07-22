@@ -92,6 +92,7 @@ const STORES = ['equipment', 'documents', 'journal', 'sync_queue'];
 
 function openDB() {
   return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('IndexedDB недоступен в этом браузере')); return; }
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
@@ -102,13 +103,22 @@ function openDB() {
       });
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(req.error || new Error('Не удалось открыть IndexedDB (возможно, приватная вкладка блокирует хранилище)'));
+    req.onblocked = () => reject(new Error('IndexedDB заблокирован другой открытой вкладкой'));
   });
 }
-let dbPromise = openDB();
+let dbPromise = openDB().catch(err => {
+  console.warn('LOGBOOK: IndexedDB unavailable, falling back to in-memory storage (данные не переживут перезагрузку страницы):', err.message);
+  return null; // сигнал использовать in-memory fallback ниже
+});
+
+// In-memory fallback, если IndexedDB совсем недоступен (напр. приватная вкладка).
+const memoryStore = {};
+STORES.forEach(name => { memoryStore[name] = new Map(); });
 
 async function idbGetAll(store) {
   const db = await dbPromise;
+  if (!db) return Array.from(memoryStore[store].values());
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readonly');
     const req = tx.objectStore(store).getAll();
@@ -118,6 +128,7 @@ async function idbGetAll(store) {
 }
 async function idbGet(store, id) {
   const db = await dbPromise;
+  if (!db) return memoryStore[store].get(id) || null;
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readonly');
     const req = tx.objectStore(store).get(id);
@@ -127,6 +138,7 @@ async function idbGet(store, id) {
 }
 async function idbPut(store, obj) {
   const db = await dbPromise;
+  if (!db) { memoryStore[store].set(obj.id, obj); return; }
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readwrite');
     tx.objectStore(store).put(obj);
@@ -448,10 +460,23 @@ $('stopScanBtn').addEventListener('click', stopScan);
    INIT
    ===================================================================== */
 (async () => {
-  updateNetBadge();
-  await initAuth();
-  Data.flushQueue();
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  try {
+    updateNetBadge();
+    await initAuth();
+    Data.flushQueue();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  } catch (err) {
+    // Не даём приложению тихо зависнуть на "Инициализация..." —
+    // показываем причину прямо на экране, чтобы было что прислать при отладке.
+    console.error('LOGBOOK init error:', err);
+    const hint = document.getElementById('syncHint');
+    if (hint) {
+      hint.style.color = '#ff8a75';
+      hint.textContent = 'Ошибка запуска: ' + (err && err.message ? err.message : String(err)) +
+        ' — попробуйте открыть в обычной вкладке (не приватной) и обновить страницу.';
+    }
+    showView('view-vessel');
   }
 })();

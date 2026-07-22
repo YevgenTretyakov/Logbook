@@ -9,10 +9,13 @@ const APP_SHELL = [
   './app.js',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js'
+  './icons/icon-512.png'
 ];
+// Внешние CDN-скрипты (Supabase, jsQR) намеренно НЕ входят в обязательный
+// precache — если один из них недоступен в момент установки SW, вся
+// установка проваливалась бы целиком (cache.addAll — всё или ничего).
+// Они всё равно закэшируются при первом успешном онлайн-запросе через
+// обработчик fetch ниже.
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
