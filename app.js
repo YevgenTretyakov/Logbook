@@ -6,8 +6,8 @@ const $ = id => document.getElementById(id);
 const CONFIG = {
   // 1) Создайте проект на https://supabase.com (бесплатный тир достаточен для старта)
   // 2) Settings → API → скопируйте Project URL и anon public key сюда
-  SUPABASE_URL: '', // напр. 'https://xxxxxxxx.supabase.co'
-  SUPABASE_ANON_KEY: '',
+  SUPABASE_URL: 'https://broqhothpbdpqleezxff.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_5QxVBadWsJXkSan7E60ELQ_eyDZ28lH',
 
   // 3) Backend-эндпоинты для AI-анализа и перевода — см. README.md,
   //    почему это НЕ должно быть прямым вызовом Anthropic/DeepL из браузера.
