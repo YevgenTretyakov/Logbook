@@ -200,7 +200,25 @@ const Data = {
   // Загрузка PDF требует сети — файл сразу уходит в Supabase Storage,
   // офлайн-очередь для бинарных файлов в этом каркасе не реализована
   // (см. README.md, раздел "Что ещё не сделано").
+  // Гарантирует, что запись оборудования реально существует в Supabase,
+  // прежде чем на неё что-то ссылается (документы, журнал). Нужна,
+  // потому что оборудование могло быть создано локально/офлайн ещё до
+  // подключения Supabase — без этой проверки загрузка документа падала
+  // бы с ошибкой внешнего ключа.
+  async ensureEquipmentSynced(code) {
+    if (!navigator.onLine || !supa) return;
+    try {
+      const { data } = await supa.from('equipment').select('id').eq('id', code).single();
+      if (data) return; // уже есть в облаке
+    } catch (e) { /* не найдено — создаём ниже */ }
+    const local = await idbGet('equipment', code);
+    if (local) {
+      try { await supa.from('equipment').upsert(local); } catch (e) { console.warn('ensureEquipmentSynced upsert failed:', e.message); }
+    }
+  },
+
   async uploadDocument(code, docType, file, title, uploaderName) {
+    await this.ensureEquipmentSynced(code);
     const path = `${code}/${docType}/${Date.now()}_${file.name}`;
     const { error: upErr } = await supa.storage.from('documents').upload(path, file);
     if (upErr) throw upErr;
