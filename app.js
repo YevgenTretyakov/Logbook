@@ -60,8 +60,35 @@ $('sendMagicLinkBtn').addEventListener('click', async () => {
   const email = $('authEmail').value.trim();
   if (!email) { $('authStatus').textContent = 'Введите email.'; return; }
   $('authStatus').textContent = 'Отправляем...';
-  const { error } = await supa.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-  $('authStatus').textContent = error ? ('Ошибка: ' + error.message) : 'Ссылка отправлена на ' + email + ' — откройте её на этом телефоне.';
+  const { error } = await supa.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  if (error) {
+    $('authStatus').textContent = 'Ошибка: ' + error.message;
+    return;
+  }
+  $('authStatus').textContent = '';
+  $('loginStep2Email').textContent = email;
+  $('loginStep1').style.display = 'none';
+  $('loginStep2').style.display = 'flex';
+});
+
+$('verifyCodeBtn').addEventListener('click', async () => {
+  const email = $('authEmail').value.trim();
+  const code = $('authCode').value.trim();
+  if (!code) { $('authStatus').textContent = 'Введите код из письма.'; return; }
+  $('authStatus').textContent = 'Проверяем...';
+  const { error } = await supa.auth.verifyOtp({ email, token: code, type: 'email' });
+  if (error) {
+    $('authStatus').textContent = 'Ошибка: ' + error.message + ' — запросите код заново, если истёк.';
+    return;
+  }
+  $('authStatus').textContent = '';
+  // onAuthStateChange сам переключит экран после успешного входа
+});
+
+$('backToEmailBtn').addEventListener('click', () => {
+  $('loginStep2').style.display = 'none';
+  $('loginStep1').style.display = 'flex';
+  $('authStatus').textContent = '';
 });
 
 $('saveProfileNameBtn').addEventListener('click', async () => {
