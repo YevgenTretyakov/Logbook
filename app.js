@@ -7,7 +7,7 @@ const CONFIG = {
   // 1) Создайте проект на https://supabase.com (бесплатный тир достаточен для старта)
   // 2) Settings → API → скопируйте Project URL и anon public key сюда
   SUPABASE_URL: 'https://broqhothpbdpqleezxff.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_5QxVBadWsJXkSan7E60ELQ_eyDZ28lH',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyb3Fob3RocGJkcHFsZWV6eGZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MzEzNTEsImV4cCI6MjEwMDQwNzM1MX0.zoTmNAeeEpzpTw760Btdyxr3S1kHiI3pBJo-2FzAdr4',
 
   // 3) Backend-эндпоинты для AI-анализа и перевода — см. README.md,
   //    почему это НЕ должно быть прямым вызовом Anthropic/DeepL из браузера.
