@@ -1,7 +1,7 @@
 // LOGBOOK service worker — кэширует оболочку приложения для офлайн-работы.
 // При изменении файлов приложения увеличивайте CACHE_VERSION, иначе
 // у пользователей останется старая версия из кэша.
-const CACHE_VERSION = 'logbook-v6';
+const CACHE_VERSION = 'logbook-v7';
 const APP_SHELL = [
   './',
   './index.html',

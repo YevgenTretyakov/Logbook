@@ -220,7 +220,17 @@ const Data = {
   async uploadDocument(code, docType, file, title, uploaderName) {
     await this.ensureEquipmentSynced(code);
     const path = `${code}/${docType}/${Date.now()}_${file.name}`;
-    const { error: upErr } = await supa.storage.from('documents').upload(path, file);
+    // Safari/WebKit иногда отправляет пустое тело файла через FormData
+    // (известный баг fetch+FormData на iOS) — читаем файл в ArrayBuffer
+    // вручную и отправляем его напрямую, это обходит проблему.
+    const arrayBuffer = await file.arrayBuffer();
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Файл прочитался пустым (0 байт) — возможно, он ещё не докачан из iCloud. Откройте файл через "Файлы" один раз, чтобы скачать его на устройство, и попробуйте снова.');
+    }
+    const { error: upErr } = await supa.storage.from('documents').upload(path, arrayBuffer, {
+      contentType: file.type || 'application/pdf',
+      upsert: false
+    });
     if (upErr) throw upErr;
     const { data: pub } = supa.storage.from('documents').getPublicUrl(path);
     const record = {
